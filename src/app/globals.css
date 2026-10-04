@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --font-hanken: var(--font-hanken), "Hanken Grotesk", system-ui, sans-serif;
+    --font-mono: var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+    /* BearHacks Retro-Modern Pastel Palette */
+    --pastel-blue: #CEE5FF;
+    --pastel-blue-border: #B6D8FF;
+    --pastel-yellow: #FFF4CF;
+    --pastel-yellow-border: #F7E5A3;
+    --pastel-mint: #D7F5E4;
+    --pastel-mint-border: #B0ECC4;
+    --pastel-peach: #FFE5DE;
+    --pastel-peach-border: #FDCBC0;
+    --ink-primary: #121927;
+    --ink-secondary: #4a5568;
+  }
+
+  * {
+    font-family: var(--font-hanken);
+  }
+
+  body {
+    background-color: #FBFBFC;
+    color: #121927;
+    -webkit-font-smoothing: antialiased;
+    background-image: radial-gradient(rgba(148, 163, 184, 0.18) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-hanken);
+    letter-spacing: -0.035em;
+  }
+
+  .font-mono {
+    font-family: var(--font-mono) !important;
+  }
+}
+
+/* Tactile card styles inspired by BearHacks */
+.bearhacks-card {
+  background-color: #ffffff;
+  border-radius: 1.5rem;
+  border: 1.5px solid rgba(226, 232, 240, 0.95);
+  box-shadow: 0 2px 8px -2px rgba(15, 23, 42, 0.04), 0 1px 3px -1px rgba(15, 23, 42, 0.02);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.bearhacks-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 32px -8px rgba(15, 23, 42, 0.08), 0 4px 12px -2px rgba(15, 23, 42, 0.04);
+}
+
+/* Subtle scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
