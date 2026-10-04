@@ -276,23 +276,50 @@ export default function AdminPage() {
     document.body.removeChild(link);
   };
 
-  // Handle local image file upload for speaker avatar
+  // Handle local image file upload for speaker avatar with automatic canvas compression
   const handleSpeakerAvatarUpload = (
     e: React.ChangeEvent<HTMLInputElement>,
     setter: (url: string) => void
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      alert("Image file is too large (max 5MB). Please choose a smaller photo.");
+    if (file.size > 10 * 1024 * 1024) {
+      alert("Image file is too large (max 10MB). Please choose a smaller photo.");
       return;
     }
+
     const reader = new FileReader();
     reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      if (dataUrl) {
-        setter(dataUrl);
-      }
+      const img = new Image();
+      img.onload = () => {
+        // High quality, lightweight compression (max 400x400 ~35KB) for instant cloud sync
+        const canvas = document.createElement("canvas");
+        const maxDim = 400;
+        let width = img.width;
+        let height = img.height;
+        if (width > height) {
+          if (width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          }
+        } else {
+          if (height > maxDim) {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressed = canvas.toDataURL("image/jpeg", 0.85);
+          setter(compressed);
+        } else {
+          setter(event.target?.result as string);
+        }
+      };
+      img.src = event.target?.result as string;
     };
     reader.readAsDataURL(file);
   };

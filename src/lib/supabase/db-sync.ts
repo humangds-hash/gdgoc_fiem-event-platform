@@ -175,17 +175,21 @@ export async function fetchRemoteEvents(): Promise<EventDetails[] | null> {
  * Upserts an event into Supabase
  */
 export async function upsertRemoteEvent(event: EventDetails): Promise<boolean> {
-  if (!isSupabaseConfigured() || !supabase) return false;
+  if (!isSupabaseConfigured() || !supabase) {
+    console.warn("[SUPABASE] Cloud sync skipped: Supabase not configured in client environment");
+    return false;
+  }
   try {
     const row = mapEventToDbRow(event);
     const { error } = await supabase.from("events").upsert(row, { onConflict: "id" });
     if (error) {
-      console.warn("Supabase upsert event notice:", error.message);
+      console.error("[SUPABASE ERROR] Upsert event failed:", error.message, error);
       return false;
     }
+    console.log(`[SUPABASE SUCCESS] Event "${event.title}" synced to cloud with ${event.team.length} speakers!`);
     return true;
   } catch (err) {
-    console.warn("Supabase upsert event network issue:", err);
+    console.error("[SUPABASE ERROR] Upsert network exception:", err);
     return false;
   }
 }

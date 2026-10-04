@@ -217,6 +217,8 @@ export async function GET() {
   const hasSmtpUser = Boolean(process.env.SMTP_USER);
   const hasSmtpPass = Boolean(process.env.SMTP_PASS);
   const hasResend = Boolean(process.env.RESEND_API_KEY);
+  const hasSupabaseUrl = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL);
+  const hasSupabaseKey = Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 
   const maskedUser = process.env.SMTP_USER
     ? process.env.SMTP_USER.replace(/(.{2})(.*)(@.*)/, "$1***$3")
@@ -224,13 +226,13 @@ export async function GET() {
 
   return NextResponse.json({
     email_service_ready: (hasSmtpUser && hasSmtpPass) || hasResend,
+    supabase_configured: hasSupabaseUrl && hasSupabaseKey,
+    has_supabase_url: hasSupabaseUrl,
+    has_supabase_key: hasSupabaseKey,
+    supabase_host: process.env.NEXT_PUBLIC_SUPABASE_URL || null,
     provider: hasResend ? "resend" : hasSmtpUser ? "gmail_smtp" : "none (simulation mode)",
     has_smtp_user: hasSmtpUser,
     has_smtp_pass: hasSmtpPass,
     configured_smtp_account: maskedUser,
-    guidance:
-      !hasSmtpUser || !hasSmtpPass
-        ? "Add SMTP_USER and SMTP_PASS in your Vercel Project Settings > Environment Variables, then redeploy."
-        : "Email service is fully configured and ready.",
   });
 }
