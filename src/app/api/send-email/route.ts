@@ -148,45 +148,89 @@ export async function POST(req: Request) {
     const smtpPort = Number(process.env.SMTP_PORT) || 465;
     const smtpUser = process.env.SMTP_USER || "";
     const smtpPass = process.env.SMTP_PASS || "";
-    const emailFrom = process.env.EMAIL_FROM || smtpUser || "no-reply@tinygd.dev";
+    const rawEmailFrom = process.env.EMAIL_FROM || "";
 
-    if (smtpHost && smtpUser && smtpPass && !smtpPass.includes("placeholder")) {
-      const transporter = nodemailer.createTransport({
-        host: smtpHost,
-        port: smtpPort,
-        secure: smtpPort === 465,
-        auth: {
-          user: smtpUser,
-          pass: smtpPass.replace(/\s+/g, ""), // Remove spaces from Google App passwords
-        },
-      });
+    if (smtpUser && smtpPass && !smtpPass.includes("placeholder")) {
+      // Clean sender address to prevent malformed nested brackets like <"Name" <email>>
+      let senderAddress = "";
+      if (rawEmailFrom) {
+        if (rawEmailFrom.includes("<") && rawEmailFrom.includes(">")) {
+          senderAddress = rawEmailFrom;
+        } else {
+          senderAddress = `"${eventTitle || "GDG Community Events"}" <${rawEmailFrom.trim()}>`;
+        }
+      } else {
+        senderAddress = `"${eventTitle || "GDG Community Events"}" <${smtpUser.trim()}>`;
+      }
+
+      const isGmail = !smtpHost || smtpHost.includes("gmail") || smtpUser.endsWith("@gmail.com");
+      const transporter = nodemailer.createTransport(
+        isGmail
+          ? {
+              service: "gmail",
+              auth: {
+                user: smtpUser.trim(),
+                pass: smtpPass.replace(/\s+/g, ""), // Remove spaces from Google App passwords
+              },
+            }
+          : {
+              host: smtpHost,
+              port: smtpPort,
+              secure: smtpPort === 465,
+              auth: {
+                user: smtpUser.trim(),
+                pass: smtpPass.replace(/\s+/g, ""),
+              },
+            }
+      );
 
       const info = await transporter.sendMail({
-        from: `"${eventTitle || "TinyGD Events"}" <${emailFrom}>`,
+        from: senderAddress,
         to: email,
         subject: `Your RSVP Confirmation: ${eventTitle || "Study Jams 2026–27"}`,
         html: htmlContent,
       });
 
+      console.log(`[EMAIL DISPATCHED] ID: ${info.messageId} to ${email}`);
       return NextResponse.json({ success: true, messageId: info.messageId, provider: "smtp" });
     }
 
-    // 3. Fallback simulation when email keys are not in .env.local yet
-    console.log(`[EMAIL SIMULATION] Sent to: ${email}`, {
-      fullName,
-      ticketId,
-      eventTitle,
-      status: "Simulated because SMTP_USER / SMTP_PASS or RESEND_API_KEY is not configured in .env.local yet",
-    });
+    // 3. Fallback simulation when email keys are not in .env yet
+    console.warn(`[EMAIL WARNING] Real email not dispatched: SMTP credentials missing in environment variables. Sent to: ${email}`);
 
     return NextResponse.json({
       success: true,
       simulated: true,
-      message: "Email simulated (add Gmail SMTP or Resend credentials in .env.local for real delivery)",
+      message: "Email simulated: Missing SMTP_USER and SMTP_PASS in Vercel Environment Variables.",
     });
   } catch (error: unknown) {
     const errMessage = error instanceof Error ? error.message : "Internal error";
     console.error("Email send error:", error);
     return NextResponse.json({ error: errMessage }, { status: 500 });
   }
+}
+
+/**
+ * Diagnostic GET endpoint to check if email environment variables are loaded in production
+ */
+export async function GET() {
+  const hasSmtpUser = Boolean(process.env.SMTP_USER);
+  const hasSmtpPass = Boolean(process.env.SMTP_PASS);
+  const hasResend = Boolean(process.env.RESEND_API_KEY);
+
+  const maskedUser = process.env.SMTP_USER
+    ? process.env.SMTP_USER.replace(/(.{2})(.*)(@.*)/, "$1***$3")
+    : null;
+
+  return NextResponse.json({
+    email_service_ready: (hasSmtpUser && hasSmtpPass) || hasResend,
+    provider: hasResend ? "resend" : hasSmtpUser ? "gmail_smtp" : "none (simulation mode)",
+    has_smtp_user: hasSmtpUser,
+    has_smtp_pass: hasSmtpPass,
+    configured_smtp_account: maskedUser,
+    guidance:
+      !hasSmtpUser || !hasSmtpPass
+        ? "Add SMTP_USER and SMTP_PASS in your Vercel Project Settings > Environment Variables, then redeploy."
+        : "Email service is fully configured and ready.",
+  });
 }

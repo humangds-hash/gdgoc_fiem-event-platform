@@ -1,45 +1,33 @@
 @echo off
-title Push GDG Project to GitHub
+title Push GDG Event Platform to GitHub
 color 0a
 echo ===================================================
-echo     Push GDG Event Platform to GitHub
+echo     Pushing GDG Event Platform to GitHub
+echo     Target: https://github.com/humangds-hash/gdgoc_fiem-event-platform
 echo ===================================================
 echo.
-cd /d %~dp0
+cd /d C:\Users\User\GDG
 
-echo 1. Checking Git status...
-git status -s
-
-echo.
-set /p REPO_URL="Enter your GitHub Repository URL (e.g. https://github.com/username/gdg-platform.git): "
-if "%REPO_URL%"=="" (
-    echo [ERROR] No GitHub URL provided. Exiting.
-    pause
-    exit /b 1
-)
-
-echo.
-echo 2. Configuring Git and staging files...
+echo 1. Verifying Git remote...
+git remote set-url origin https://github.com/humangds-hash/gdgoc_fiem-event-platform.git
 git branch -M main
-git remote remove origin 2>nul
-git remote add origin %REPO_URL%
-
-git add .
-git commit -m "Deploy: GDG Event Platform & Check-in System" 2>nul
 
 echo.
-echo 3. Pushing code to GitHub (main branch)...
+echo 2. Pushing all files to branch 'main'...
+echo (If a GitHub sign-in window opens, click "Sign in with your browser")
+echo.
 git push -u origin main
 
 if %errorlevel% equ 0 (
     echo.
     echo ===================================================
-    echo [SUCCESS] Your code is live on GitHub!
+    echo [SUCCESS] Code is live on GitHub!
+    echo URL: https://github.com/humangds-hash/gdgoc_fiem-event-platform
     echo Next step: Deploy to Vercel (https://vercel.com)
     echo ===================================================
 ) else (
     echo.
-    echo [NOTE] If prompted for credentials, sign in with your GitHub account.
+    echo [ERROR] Push failed or was canceled.
 )
 
 pause
